@@ -4,6 +4,8 @@ const url_id = window.location.search;
 const params = new URLSearchParams(url_id);
 const id = params.get('id');
 
+let produitData = []
+
 console.log(id);
 
 // Récupération des éléments du HTML pour pouvoir les relier aux produits (titre, prix etc...)
@@ -23,15 +25,20 @@ fetch(`http://localhost:3000/api/products/${id}`)
         }
     })
     .then(function (value) {
-        console.log(value)
-        title.innerHTML = value.name,
-            price.innerHTML = value.price,
-            description.innerHTML = value.description,
-            itemsImg.innerHTML = `<img src="${value.imageUrl}" alt="${value.altTxt}"></img>`;
+        produitData = value
+        console.log("produitData")
+        console.log(produitData)
+
+        // On ajoute les valeurs de produitData sur la page produit
+
+        title.innerHTML = produitData.name,
+            price.innerHTML = produitData.price,
+            description.innerHTML = produitData.description,
+            itemsImg.innerHTML = `<img src="${produitData.imageUrl}" alt="${produitData.altTxt}"></img>`;
 
         // On parcours avec une boucle la valeur des couleurs de chaque produit
 
-        for (let color of value.colors) {
+        for (let color of produitData.colors) {
             let colors = document.createElement('option');
             colorSelect.appendChild(colors);
             colors.value = color,
@@ -45,26 +52,51 @@ fetch(`http://localhost:3000/api/products/${id}`)
 
         addCart.addEventListener('click', function () {
 
-            let addProducts = {                        // On prend les valeurs que l'on veut garder au clique du bouton "Ajouter au panier"
-                nomProduit: value.name,
-                Quantité: quantity.value,
-                Couleur: colorSelect.value,
-                Prix: value.price,
-                imageProduit: value.imageUrl
-            }
-
-            let dataStorage = JSON.parse(localStorage.getItem('Products'))
-            console.log(dataStorage);
-
-            if (dataStorage) {
-                dataStorage.push(addProducts)
-                localStorage.setItem('Products', JSON.stringify(dataStorage))
+            if (quantity.value <= 0 || colorSelect.value == "") {
+                alert('Veuillez ajouter une quantité ou sélectionner une couleur')
 
             } else {
-                dataStorage = []
-                dataStorage.push(addProducts)
-                localStorage.setItem('Products', JSON.stringify(dataStorage))
-                console.log(dataStorage)
+
+                const addProducts = Object.assign({}, produitData, {
+                    couleur: `${colorSelect.value}`,
+                    quantite: `${quantity.value}`
+                })
+
+                console.log(addProducts);
+
+                // Enregistrement des valeurs choisis par l'utilisateur dans le localStorage
+                // On déclare la variable dans laquelle les éléments seront introduits dans le localStorage (avec key et value)
+
+                let dataStorage = JSON.parse(localStorage.getItem('products'))
+                console.log(dataStorage);
+
+                // Si dataStorage est égal à null donc si il n'y a pas d'éléments enregistrés dans le localStorage alors :
+
+                if (dataStorage == null) {
+                    dataStorage = []
+                    dataStorage.push(addProducts)
+                    localStorage.setItem('products', JSON.stringify(dataStorage))
+
+                    // Si on ajoute un produit avec le même id et la même couleur qu'il y'a déjà dans le panier, alors on incrémente celui-ci
+
+                } else if (dataStorage != null) {
+                    for (element in dataStorage){
+                        if(dataStorage[element]._id == dataStorage._id && dataStorage[element].couleur == dataStorage.couleur){
+                            dataStorage[element].quantite = dataStorage[element].quantite + addProducts.quantite
+
+                            localStorage.setItem('products', JSON.stringify(dataStorage))
+                            return element;
+                        }
+                    }
+
+                }
+
+                if (quantity.value == 1) {
+                    alert('Le produit a bien été ajouté à votre panier')
+
+                } else {
+                    alert('Les produits ont bien été ajoutés à votre panier')
+                }
             }
         })
     })
