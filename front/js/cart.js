@@ -1,112 +1,211 @@
 let dataStorage = JSON.parse(localStorage.getItem('products'));
 console.log(dataStorage);
 
-let cartItems = document.getElementById('cart__items');
 
-for (let i = 0; i < dataStorage.length; i++) {
+if (dataStorage) {
+  for (let element of dataStorage) {
+    let item = {
+      idProduit: element.idProduit,
+      colorProduit: element.colorProduit,
+      quantityProduit: element.quantityProduit
+    }
+    console.log(item);
 
-  cartItems.innerHTML +=
-    `<article class="cart__item" data-id="${dataStorage[i]._id}" data-color="${dataStorage[i].couleur}">
-<div class="cart__item__img">
-  <img src="${dataStorage[i].imageUrl}" alt="${dataStorage[i].altTxt}">
-</div>
-<div class="cart__item__content">
-  <div class="cart__item__content__description">
-    <h2>${dataStorage[i].name}</h2>
-    <p>${dataStorage[i].couleur}</p>
-    <p>${dataStorage[i].price}</p>
-  </div>
-  <div class="cart__item__content__settings">
-    <div class="cart__item__content__settings__quantity">
-      <p>Qté : </p>
-      <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${dataStorage[i].quantite}">
-    </div>
-    <div class="cart__item__content__settings__delete">
-      <p class="deleteItem">Supprimer</p>
-    </div>
-  </div>
-</div>
-</article>`
-}
+    fetch(`http://localhost:3000/api/products/` + item.idProduit)
+      .then(function (response) {
+        if (response.ok) {
+          return response.json();
+        }
+      })
 
-// On déclare la fonction quantité
+      .then(function (element) {
+        element = element
 
-function quantity() {
+        let cartItems = document.getElementById('cart__items');
 
-  const total = [];
+        // Création balise article
 
-  // Récupérer la quantité de chaque éléments
+        let article = document.createElement('article');
+        article.classList.add('cart__item');
+        article.setAttribute('data-id', `${item.idProduit}`);
+        article.setAttribute('data-color', `${item.colorProduit}`);
+        cartItems.appendChild(article);
 
-  for (let i = 0; i < dataStorage.length; i++) {
-    let quantityTotal = parseInt(dataStorage[i].quantite);
+        // Création balise div avec img
 
-    // parseINT transforme une variable en int pour pouvoir effectuer des calculs
+        let divImg = document.createElement('div');
+        divImg.classList.add('cart__item__img');
+        article.appendChild(divImg);
 
-    // Ajouter les quantités de chaque éléments dans la variable total qui contient un tableau vide
+        let imgDiv = document.createElement('img');
+        imgDiv.setAttribute('src', `${element.imageUrl}`);
+        imgDiv.setAttribute('alt', `${element.altTxt}`);
+        divImg.appendChild(imgDiv);
 
-    total.push(quantityTotal)
+        // Création balise div général
+
+        let divContent = document.createElement('div');
+        divContent.classList.add('cart__item__content');
+        article.appendChild(divContent);
+
+        // Création div contenant le nom, la couleur et le prix du produit
+
+        let divInfo = document.createElement('div');
+        divInfo.classList.add('cart__item__content__description');
+        divContent.appendChild(divInfo);
+
+        // Création balise h2 contenant le nom du produit
+
+        let h2Name = document.createElement('h2');
+        h2Name.textContent = element.name;
+        divInfo.appendChild(h2Name);
+
+        // Création de la balise p contenant la couleur du produit
+
+        let colorP = document.createElement('p');
+        colorP.textContent = item.colorProduit;
+        divInfo.appendChild(colorP);
+
+        // Création balise p contenant le prix du produit
+
+        let priceP = document.createElement('p');
+        priceP.textContent = element.price;
+        divInfo.appendChild(priceP);
+
+        // Création balise div englobant la quantité et le bouton delete
+
+        let divSettings = document.createElement('div');
+        divSettings.classList.add('cart__item__content__settings');
+        divContent.appendChild(divSettings);
+
+        // Création div quantité
+
+        let divQuantity = document.createElement('div');
+        divQuantity.classList.add('cart__item__content__settings__quantity');
+        divSettings.appendChild(divQuantity);
+
+        // Création balise p content la valeur de la quantité
+
+        let quantityText = document.createElement('p');
+        quantityText.textContent = `Qté :`;
+        divQuantity.appendChild(quantityText);
+
+        // Création de l'input contenant la quantité et le pouvoir de la modifier
+
+        let inputQuantity = document.createElement('input');
+        inputQuantity.classList.add('itemQuantity');
+        inputQuantity.setAttribute('type', 'number');
+        inputQuantity.setAttribute('name', 'itemQuantity');
+        inputQuantity.setAttribute('min', '1');
+        inputQuantity.setAttribute('max', '100');
+        inputQuantity.setAttribute('value', item.quantityProduit);
+        divQuantity.appendChild(inputQuantity);
+
+        // Création balise div contenant l'élément du bouton delete
+
+        let divDelete = document.createElement('div');
+        divDelete.classList.add('cart__item__content__settings__delete');
+        divSettings.appendChild(divDelete);
+
+        // Création balise p du bouton delete
+
+        let btnDelete = document.createElement('p');
+        btnDelete.classList.add('deleteItem');
+        btnDelete.textContent = `Supprimer`;
+        divDelete.appendChild(btnDelete);
+
+        //  On supprime un produit sélectionné par l'utilisateur via le bouton 'supprimer'
+
+        let deleteItem = document.querySelectorAll('.deleteItem');
+        console.log(deleteItem)
+
+        for (let i = 0; i < deleteItem.length; i++) {
+          deleteItem[i].addEventListener('click', function () {
+
+            dataStorage = dataStorage.filter((el) => el.idProduit != dataStorage[i].idProduit || el.colorProduit != dataStorage[i].colorProduit)
+            localStorage.setItem('products', JSON.stringify(dataStorage))
+            location.reload()
+            alert('Le produit a bien été supprimé')
+          })
+        }
+
+        // On déclare la fonction quantité
+
+        function quantity() {
+
+          let total = 0;
+
+          // Récupérer la quantité de chaque éléments
+
+          for (let quantityData of dataStorage) {
+            total += parseInt(quantityData.quantityProduit)
+            console.log(total);
+          }
+
+          // Afficher les quantités total pour l'utilisateur
+
+          let totalQuantity = document.getElementById('totalQuantity');
+          totalQuantity.textContent = total
+
+        };
+
+        quantity();
+
+        function price() {
+
+          let total = [];
+
+          let totalProductPrice = parseInt(item.quantityProduit) * parseInt(element.price);
+          total.push(totalProductPrice);
+          console.log("total");
+          console.log(total);
+
+          let totalPrice = document.getElementById('totalPrice');
+          const reducer = (accumulator, currentValue) => accumulator + currentValue;
+          const resTotal = total.reduce(reducer, 0);
+          console.log("restotal");
+          console.log(resTotal);
+          totalPrice.innerHTML = resTotal;
+        };
+
+        price();
+
+        inputQuantity.addEventListener('change', function () {
+
+          //Selection de l'element à modifier en fonction de son id ET sa couleur
+
+          let ModifValue = Number(inputQuantity.value);
+          let idModif = item.idProduit;
+          let colorModif = item.colorProduit;
+
+          let cart =
+            dataStorage.find((el) => el.idProduit === idModif) &&
+            dataStorage.find((el) => el.colorProduit === colorModif);
+          if (cart) {
+
+            cart.quantityProduit = ModifValue;
+            localStorage.setItem('products', JSON.stringify(dataStorage));
+
+          } else {
+
+            cart.push(element);
+            localStorage.setItem('products', JSON.stringify(dataStorage));
+
+          }
+
+          location.reload();
+        })
+
+      })
+
+      .catch(function (err) {
+        alert('Une erreur est survenue')
+        console.log(err);
+      });
   }
-
-  // On additionne toutes les quantités qu'il y'a dans le tableau [total]
-
-  const reducer = (accumulator, currentValue) => accumulator + currentValue;
-  let resTotal = total.reduce(reducer, 0);
-
-  // Afficher les quantités total pour l'utilisateur
-
-  let totalQuantity = document.getElementById('totalQuantity');
-  totalQuantity.innerHTML = resTotal
-
 }
 
-quantity();
-
-// On déclare la fonction prix
-
-function price() {
-
-  const total = [];
-  quantity();
-
-  // Récupérer les prix du panier
-
-  for (let i = 0; i < dataStorage.length; i++) {
-    let prixTotal = dataStorage[i].price * parseInt(dataStorage[i].quantite);
-
-    // Ajouter les prix du panier dans la variable total qui contient un tableau vide
-
-    total.push(prixTotal)
-  }
-
-  // On additionne tous les prix qu'il y'a dans le tableau [total]
-
-  const reducer = (accumulator, currentValue) => accumulator + currentValue;
-  const resTotal = total.reduce(reducer, 0);
-
-  // Afficher le résultat total pour l'utilisateur
-
-  let totalPrice = document.getElementById('totalPrice');
-  totalPrice.innerHTML = resTotal
-
-}
-
-price();
-
-// On supprime un produit sélectionné par l'utilisateur via le bouton 'supprimer'
-
-let deleteItem = document.querySelectorAll('.deleteItem');
-console.log(deleteItem)
-
-for (let i = 0; i < deleteItem.length; i++) {
-  deleteItem[i].addEventListener('click', function () {
-
-    dataStorage = dataStorage.filter((el) => el._id != dataStorage[i]._id || el.couleur != dataStorage[i].couleur)
-    localStorage.setItem('products', JSON.stringify(dataStorage))
-    location.reload()
-  })
-}
-
-// Formulaire de commande
+// **********************************************************Formulaire de commande******************************************************************
 
 // On récupère l'ID du bouton submit "commander"
 
@@ -209,7 +308,7 @@ order.addEventListener('click', function (e) {
   // On pousse nos ID dans notre tableau products
 
   dataStorage.forEach((element) => {
-    products.push(element._id)
+    products.push(element.idProduit)
   });
 
   // Envoie de l'objet orderReady vers le serveur
@@ -222,15 +321,17 @@ order.addEventListener('click', function (e) {
     },
   })
 
-    .then(function (response) {
-      if (response.ok) {
-        return response.json();
+    .then(function (res) {
+      if (res.ok) {
+        return res.json();
       }
     })
+
     .then(function (response) {
-      window.location.href = 'confirmation.html?order.Id=' + response.orderId
+      window.location.href = `confirmation.html?order.Id=` + response.orderId
       console.log(response)
     })
+
     .catch(function (err) {
       alert('Une erreur est survenue')
       console.log(err);

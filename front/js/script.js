@@ -11,17 +11,30 @@ fetch(url)
             return response.json();
         }
     })
-    .then(function (value) {
-        for (let i = 0; i < value.length; i++) {
-            let valueI = value[i]
-            items.innerHTML +=
-                `<a href="./product.html?id=${valueI._id}">
-                    <article>
-                        <img src="${valueI.imageUrl}" alt="${valueI.altTxt}">
-                            <h3 class="productName">${valueI.name}</h3>
-                                <p class="productDescription">${valueI.description}</p>
-                    </article>
-                </a>`
+    .then(function (products) {
+        for (let i = 0; i < products.length; i++) {
+            
+            const productA = document.createElement('a');
+            productA.setAttribute('href', `product.html?id=${products[i]._id}`);
+            items.appendChild(productA);
+
+            const productArticle = document.createElement('article');
+            productA.appendChild(productArticle);
+
+            const productImg = document.createElement('img');
+            productImg.setAttribute('src', products[i].imageUrl);
+            productImg.setAttribute('alt', products[i].alxTxt);
+            productArticle.appendChild(productImg);
+
+            const productName = document.createElement('h3');
+            productName.classList.add('productName');
+            productName.textContent = products[i].name;
+            productArticle.appendChild(productName);
+
+            const productDescription = document.createElement('p');
+            productDescription.classList.add('productDescription');
+            productDescription.textContent = products[i].description;
+            productArticle.appendChild(productDescription);
         };
     })
     .catch(function (err) {

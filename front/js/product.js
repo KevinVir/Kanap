@@ -1,12 +1,8 @@
-// Récupération de l'ID de chaque produit grâche à la méthode URLSearchParams
+// Récupération de l'ID de chaque produit grâce à la méthode URLSearchParams
 
 const url_id = window.location.search;
 const params = new URLSearchParams(url_id);
 const id = params.get('id');
-
-let produitData = []
-
-console.log(id);
 
 // Récupération des éléments du HTML pour pouvoir les relier aux produits (titre, prix etc...)
 
@@ -15,93 +11,171 @@ let price = document.getElementById('price');
 let description = document.getElementById('description');
 let itemsImg = document.querySelector('.item__img');
 let colorSelect = document.getElementById('colors');
+let addCart = document.getElementById('addToCart');
 
 // Appel de l'API avec fetch suivi de l'id du produit cliqué
 
-fetch(`http://localhost:3000/api/products/${id}`)
+fetch(`http://localhost:3000/api/products/`)
     .then(function (response) {
         if (response.ok) {
             return response.json();
         }
     })
-    .then(function (value) {
-        produitData = value
-        console.log("produitData")
-        console.log(produitData)
 
-        // On ajoute les valeurs de produitData sur la page produit
+    .then(function (data) {
 
-        title.innerHTML = produitData.name,
-            price.innerHTML = produitData.price,
-            description.innerHTML = produitData.description,
-            itemsImg.innerHTML = `<img src="${produitData.imageUrl}" alt="${produitData.altTxt}"></img>`;
+        // On parcours une boucle qui va envoyer les bonnes données associées au produit sélectionné
 
-        // On parcours avec une boucle la valeur des couleurs de chaque produit
+        for (element of data) {
+            if (element._id === id) {
+                const productImg = document.createElement('img');
+                productImg.setAttribute('src', element.imageUrl);
+                productImg.setAttribute('alt', element.altTxt);
+                itemsImg.appendChild(productImg);
 
-        for (let color of produitData.colors) {
-            let colors = document.createElement('option');
-            colorSelect.appendChild(colors);
-            colors.value = color,
-                colors.innerHTML = color
-        }
+                title.textContent = element.name;
+                description.textContent = element.description;
+                price.textContent = element.price;
 
-        // On crée une variable addCart qui écoutera l'évènement du clique sur le bouton "Ajouter au panier"
+                // On parcours une boucle for pour faire une liste déroulante des couleurs disponibles sur le produit
 
-        let addCart = document.getElementById('addToCart');
-        let quantity = document.getElementById('quantity');
+                for (let color of element.colors) {
+                    let colors = document.createElement('option');
+                    colorSelect.appendChild(colors);
+                    colors.value = color,
+                        colors.innerHTML = color
+                };
 
-        addCart.addEventListener('click', function () {
-
-            if (quantity.value <= 0 || colorSelect.value == "") {
-                alert('Veuillez ajouter une quantité ou sélectionner une couleur')
-
-            } else {
-
-                const addProducts = Object.assign({}, produitData, {
-                    couleur: `${colorSelect.value}`,
-                    quantite: `${quantity.value}`
-                })
-
-                console.log(addProducts);
-
-                // Enregistrement des valeurs choisis par l'utilisateur dans le localStorage
-                // On déclare la variable dans laquelle les éléments seront introduits dans le localStorage (avec key et value)
-
-                let dataStorage = JSON.parse(localStorage.getItem('products'))
-                console.log(dataStorage);
-
-                // Si dataStorage est égal à null donc si il n'y a pas d'éléments enregistrés dans le localStorage alors :
-
-                if (dataStorage == null) {
-                    dataStorage = []
-                    dataStorage.push(addProducts)
-                    localStorage.setItem('products', JSON.stringify(dataStorage))
-
-                    // Si on ajoute un produit avec le même id et la même couleur qu'il y'a déjà dans le panier, alors on incrémente celui-ci
-
-                } else if (dataStorage != null) {
-                    for (element in dataStorage){
-                        if(dataStorage[element]._id == dataStorage._id && dataStorage[element].couleur == dataStorage.couleur){
-                            dataStorage[element].quantite = dataStorage[element].quantite + addProducts.quantite
-
-                            localStorage.setItem('products', JSON.stringify(dataStorage))
-                            return element;
-                        }
-                    }
-
-                }
-
-                if (quantity.value == 1) {
-                    alert('Le produit a bien été ajouté à votre panier')
-
-                } else {
-                    alert('Les produits ont bien été ajoutés à votre panier')
-                }
             }
-        })
+        }
     })
 
     .catch(function (err) {
         alert('Une erreur est survenue')
         console.log(err);
     });
+
+// On va ensuite chercher ce qu'il y'a dans le localStorage
+
+const dataStorage = JSON.parse(localStorage.getItem('products'))
+
+let addProducts = [
+    {
+        idProduit: " ",
+        colorProduit: " ",
+        quantityProduit: 0,
+    },
+];
+
+
+// On écoute le clique du bouton "Commander" pour envoyer les infos dans le localStorage
+
+addCart.addEventListener('click', function () {
+
+    let quantity = Number(document.getElementById('quantity').value);
+    let color = colorSelect.value;
+    let idSelect = id;
+
+    // Si la quantité est supérieur à 0 et qu'elle est inférieur à 100 et que la valeur de la couleur est différent de " "
+
+    if (quantity > 0 && quantity <= 100 && colorSelect.value != "") {
+        if (dataStorage) {
+
+            //On vérifie si le panier est vide
+
+            if (dataStorage.length === 0) {
+                console.log(
+                    "La panier est vide donc on envoie directement le produit dans le panier"
+                );
+
+                //On envoie alors le produit sélectionné
+
+                addProducts = [
+                    {
+                        idProduit: idSelect,
+                        colorProduit: color,
+                        quantityProduit: quantity,
+                    },
+                ];
+
+                // On met à jour le localStorage
+
+                localStorage.setItem('products', JSON.stringify(addProducts));
+
+            } else {
+
+                // IL y a quelque chose dans le panier
+
+                console.log(
+                    "Il y a quelque chose dans le panier, on analyse si le produit est déjà existant"
+                );
+
+                // S'il y a un kanap avec même id et couleur on ajoute seulement
+
+                let addQuantity = false;
+
+                for (let i = 0; i < dataStorage.length; i++) {
+
+                    //Initialisation de l'inspection id et couleur dans le storage
+
+                    let sameId = dataStorage[i].idProduit;
+                    let sameColor = dataStorage[i].colorProduit;
+
+                    //Conditions pour rechercher
+
+                    if (sameId === idSelect && sameColor === color) {
+
+                        //On ajoute seulement la nouvelle quantité à celle déjà existante dans le storage
+
+                        dataStorage[i].quantityProduit = Number(dataStorage[i].quantityProduit) + quantity;
+                        addQuantity = true;
+
+                        //On met à jour le panier
+
+                        localStorage.setItem('products', JSON.stringify(dataStorage));
+
+                    } else {
+                        console.log(
+                            "Le produit n'existe pas dans le panier, on l'insère"
+                        );
+                    }
+                }
+                if (addQuantity === false) {
+                    dataStorage.push(
+                        {
+                            idProduit: idSelect,
+                            colorProduit: color,
+                            quantityProduit: quantity
+                        }
+                    );
+
+                    localStorage.setItem('products', JSON.stringify(dataStorage));
+                }
+            }
+        } else {
+
+            //Création du storage car il n'existe pas
+
+            console.log(
+                "Le storage n'existe pas alors on pousse le produit directement"
+            );
+
+            addProducts = [
+                {
+                    idProduit: idSelect,
+                    colorProduit: color,
+                    quantityProduit: quantity,
+                },
+            ];
+
+            localStorage.setItem('products', JSON.stringify(addProducts));
+        }
+
+        alert("Le produit a été ajouté au panier");
+
+        // Si une mauvaise quantité et/ou une couleur n'est pas sélectionné
+
+    } else {
+           alert("Veuillez sélectionner une quantité comprise entre 1 et 100 et/ou une couleur");
+    }
+})
