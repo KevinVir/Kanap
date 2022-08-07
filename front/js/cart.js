@@ -1,14 +1,19 @@
+// On récupère le localStorage
+
 let dataStorage = JSON.parse(localStorage.getItem('products'));
 console.log(dataStorage);
 
 
+
 if (dataStorage) {
   for (let element of dataStorage) {
+
     let item = {
       idProduit: element.idProduit,
       colorProduit: element.colorProduit,
       quantityProduit: element.quantityProduit
-    }
+    };
+
     console.log(item);
 
     fetch(`http://localhost:3000/api/products/` + item.idProduit)
@@ -19,13 +24,18 @@ if (dataStorage) {
       })
 
       .then(function (element) {
-        element = element
+
+        let itemS = {
+          priceProduit: element.price
+        }
+
+        //**********************************************************************CREATION DANS LE HTML**************************************************************************
 
         let cartItems = document.getElementById('cart__items');
 
         // Création balise article
 
-        let article = document.createElement('article');
+        var article = document.createElement('article');
         article.classList.add('cart__item');
         article.setAttribute('data-id', `${item.idProduit}`);
         article.setAttribute('data-color', `${item.colorProduit}`);
@@ -69,7 +79,7 @@ if (dataStorage) {
         // Création balise p contenant le prix du produit
 
         let priceP = document.createElement('p');
-        priceP.textContent = element.price;
+        priceP.textContent = element.price + `€`;
         divInfo.appendChild(priceP);
 
         // Création balise div englobant la quantité et le bouton delete
@@ -114,87 +124,120 @@ if (dataStorage) {
         btnDelete.textContent = `Supprimer`;
         divDelete.appendChild(btnDelete);
 
-        //  On supprime un produit sélectionné par l'utilisateur via le bouton 'supprimer'
+        //****************************************************************************FIN DE LA CREATION DU HTML*************************************************************/
 
-        let deleteItem = document.querySelectorAll('.deleteItem');
-        console.log(deleteItem)
+        //****************************************************************************AJOUT DU BOUTON SUPPRIMER*************************************************************/
 
-        for (let i = 0; i < deleteItem.length; i++) {
-          deleteItem[i].addEventListener('click', function () {
+        // On écoute le click du bouton supprimer
 
-            dataStorage = dataStorage.filter((el) => el.idProduit != dataStorage[i].idProduit || el.colorProduit != dataStorage[i].colorProduit)
-            localStorage.setItem('products', JSON.stringify(dataStorage))
-            location.reload()
-            alert('Le produit a bien été supprimé')
-          })
-        }
+        btnDelete.addEventListener('click', function () {
 
-        // On déclare la fonction quantité
+          // Utilisation de la méthode filter
 
-        function quantity() {
+          let data = dataStorage.filter((el) => el.idProduit !== item.idProduit || el.colorProduit !== item.colorProduit);
 
-          let total = 0;
+          // On enregistre les modifications dans le localStorage
 
-          // Récupérer la quantité de chaque éléments
+          localStorage.setItem('products', JSON.stringify(data));
+          location.reload();
+          alert('Le produit a bien été supprimé');
+        });
 
-          for (let quantityData of dataStorage) {
-            total += parseInt(quantityData.quantityProduit)
-            console.log(total);
+        //***********************************************************************FIN DE L'AJOUT DU BTN SUPPRIMER**************************************************************/
+
+        //**********************************************************************MODIFICATIONS DES QUANTITES*******************************************************************/
+
+        // On écoute le change effectué sur le input quantity
+
+        inputQuantity.addEventListener('change', function () {
+
+          let modifValue =
+
+            // On utilise la méthode find qui nous renvoie la valeur du premier élément trouvé dans le localStorage
+
+            dataStorage.find((el) => el.idProduit === item.idProduit) &&
+            dataStorage.find((el) => el.colorProduit === item.colorProduit);
+
+          // Si modifValue est trouvé, alors on applique le changement de quantité à l'élément qui a été change
+
+          if (modifValue) {
+
+            // Si le changement de quantité est supérieur ou égal à 1 alors on applique les modifications
+
+            if (inputQuantity.value >= 1) {
+
+              modifValue.quantityProduit = inputQuantity.value;
+
+              // On enregistre les modifications de le localStorage
+
+              localStorage.setItem('products', JSON.stringify(dataStorage));
+
+            } else {
+
+              // Si le changement de quantité est inférieur à 1 alors il ne se passe rien et on reste à la valeur initial avant le change
+
+            };
+          }
+
+          location.reload();
+        });
+
+        //**********************************************************************FIN MODIFICATIONS DES QUANTITES*****************************************************************/
+
+        //**********************************************************************QUANTITE ET PRIX TOTAL***************************************************************************/
+        // On déclare la fonction quantité et prix
+
+        function quantityAndPrice() {
+
+          let totalQuantity = 0;
+
+          // Récupérer la quantité de chaque éléments dans le localStorage
+
+          for (let i = 0; i < dataStorage.length; i++) {
+            totalQuantity += parseInt(dataStorage[i].quantityProduit)
           }
 
           // Afficher les quantités total pour l'utilisateur
 
-          let totalQuantity = document.getElementById('totalQuantity');
-          totalQuantity.textContent = total
+          let totalQuantityDisplay = document.getElementById('totalQuantity');
+          totalQuantityDisplay.textContent = totalQuantity
 
-        };
+          // Création du prix total du panier
 
-        quantity();
+          // On récupère toutes les balises articles présents dans la page panier
 
-        function price() {
+          let article = document.querySelectorAll('.cart__item');
 
-          let total = [];
+          // On crée une variable à 0 pour pouvoir lui injecter par la suite des nombres
 
-          let totalProductPrice = parseInt(item.quantityProduit) * parseInt(element.price);
-          total.push(totalProductPrice);
-          console.log("total");
-          console.log(total);
+          let totalPrix = 0;
+
+          // On récupère l'id totalPrice qui contiendra le prix total du panier
 
           let totalPrice = document.getElementById('totalPrice');
-          const reducer = (accumulator, currentValue) => accumulator + currentValue;
-          const resTotal = total.reduce(reducer, 0);
-          console.log("restotal");
-          console.log(resTotal);
-          totalPrice.innerHTML = resTotal;
+
+          // On parcours une boucle des articles présent sur la page panier
+
+          for (let i = 0; i < article.length; i++) {
+
+            // On récupère le prix des articles ainsi que leurs quantités
+
+            let prix = document.querySelectorAll('.cart__item__content__description :nth-child(3)');
+            let qtt = document.querySelectorAll('.itemQuantity');
+
+            // On ajoute dans la variable totalPrix qui était à 0 la multiplication des prix par leurs quantités
+
+            totalPrix += parseInt(prix[i].textContent) * qtt[i].value
+          };
+
+          // On affiche le résultat pour l'utilisateur
+
+          totalPrice.textContent = totalPrix;
         };
 
-        price();
+        quantityAndPrice();
 
-        inputQuantity.addEventListener('change', function () {
-
-          //Selection de l'element à modifier en fonction de son id ET sa couleur
-
-          let ModifValue = Number(inputQuantity.value);
-          let idModif = item.idProduit;
-          let colorModif = item.colorProduit;
-
-          let cart =
-            dataStorage.find((el) => el.idProduit === idModif) &&
-            dataStorage.find((el) => el.colorProduit === colorModif);
-          if (cart) {
-
-            cart.quantityProduit = ModifValue;
-            localStorage.setItem('products', JSON.stringify(dataStorage));
-
-          } else {
-
-            cart.push(element);
-            localStorage.setItem('products', JSON.stringify(dataStorage));
-
-          }
-
-          location.reload();
-        })
+        //**********************************************************************FIN QUANTITE ET PRIX TOTAL*************************************************************************/
 
       })
 
@@ -205,7 +248,133 @@ if (dataStorage) {
   }
 }
 
-// **********************************************************Formulaire de commande******************************************************************
+//**************************************************************************FORMULAIRE DE COMMANDE*******************************************************************************/
+
+// On récupère nos inputs du formulaire
+
+const prenom = document.querySelector('#firstName');
+const nom = document.querySelector('#lastName');
+const adresse = document.querySelector('#address');
+const ville = document.querySelector('#city');
+const mail = document.querySelector('#email');
+
+let valuePrenom, valueNom, valueAdresse, valueVille, valueMail;
+
+prenom.addEventListener('input', function (e) {
+  valuePrenom;
+
+  if (e.target.value.length == 0) {
+    console.log('rien');
+    document.getElementById('firstNameErrorMsg').textContent = ``
+    valuePrenom = null;
+
+  } else if (e.target.value.length < 3 || e.target.value.length > 20) {
+
+    document.getElementById('firstNameErrorMsg').textContent = `Le champ Prénom n'est pas valide`;
+    valuePrenom = null;
+    console.log('trop court ou trop long');
+
+  } if (e.target.value.match(/^[A-Za-zéè]{3,20}$/)) {
+    document.getElementById('firstNameErrorMsg').textContent = ``
+    valuePrenom = e.target.value;
+    console.log('success');
+    console.log(valuePrenom);
+
+  } if (!e.target.value.match(/^[A-Za-zéè]{3,20}$/) && e.target.value.length > 3 && e.target.value.length < 25) {
+    document.getElementById('firstNameErrorMsg').textContent = `Le champ Prénom ne peut pas contenir de caractères spéciaux`;
+    valuePrenom = null;
+  }
+});
+
+nom.addEventListener('input', function (e) {
+  valueNom;
+
+  if (e.target.value.length == 0) {
+    console.log('rien');
+    document.getElementById('lastNameErrorMsg').textContent = ``
+    valueNom = null;
+
+  } else if (e.target.value.length < 3 || e.target.value.length > 20) {
+
+    document.getElementById('lastNameErrorMsg').textContent = `Le champ Nom n'est pas valide`;
+    valueNom = null;
+    console.log('trop court ou trop long');
+
+  } if (e.target.value.match(/^[A-Za-zéè]{3,20}$/)) {
+    document.getElementById('lastNameErrorMsg').textContent = ``
+    valueNom = e.target.value;
+    console.log('success');
+    console.log(valueNom);
+
+  } if (!e.target.value.match(/^[A-Za-zéè]{3,20}$/) && e.target.value.length > 3 && e.target.value.length < 25) {
+    document.getElementById('lastNameErrorMsg').textContent = `Le champ Nom ne peut pas contenir de caractères spéciaux`;
+    valueNom = null;
+  }
+});
+
+adresse.addEventListener('input', function (e) {
+  valueAdresse;
+
+  if (e.target.value.length == 0) {
+    console.log('rien');
+    document.getElementById('addressErrorMsg').textContent = ``
+    valueAdresse = null;
+
+  } else if (e.target.value.length < 5 || e.target.value.length > 50) {
+
+    document.getElementById('addressErrorMsg').textContent = `Le champ Adresse n'est pas valide`;
+    valueAdresse = null;
+    console.log('trop court ou trop long');
+
+  } if (e.target.value.match(/^[A-Za-zéèàç0-9\s]{5,50}$/)) {
+    document.getElementById('addressErrorMsg').textContent = ``
+    valueAdresse = e.target.value;
+    console.log('success');
+    console.log(valueAdresse);
+
+  };
+});
+
+ville.addEventListener('input', function (e) {
+  valueVille;
+
+  if (e.target.value.length == 0) {
+    console.log('rien');
+    document.getElementById('cityErrorMsg').textContent = ``
+    valueVille = null;
+
+  } else if (e.target.value.length < 3 || e.target.value.length > 20) {
+
+    document.getElementById('cityErrorMsg').textContent = `Le champ ville n'est pas valide`;
+    valueVille = null;
+    console.log('trop court ou trop long');
+
+  } if (e.target.value.match(/^[A-Za-zéèà\-]{3,20}$/)) {
+    document.getElementById('cityErrorMsg').textContent = ``
+    valueVille = e.target.value;
+    console.log('success');
+    console.log(valueVille);
+  }
+});
+
+mail.addEventListener('input', function (e) {
+  valueMail;
+
+  if (e.target.value.length == 0) {
+    console.log('rien');
+    document.getElementById('emailErrorMsg').textContent = ``
+    valueMail = null;
+
+  } else if (e.target.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+
+    document.getElementById('emailErrorMsg').textContent = ``;
+    valueMail = e.target.value;
+
+  } if (!e.target.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && e.target.value.length !== 0) {
+    document.getElementById('emailErrorMsg').textContent = `Le champ Email n'est pas valide. Ex d'email : openclassrooms@hotmail.com`;
+    valueMail = null;
+  }
+});
 
 // On récupère l'ID du bouton submit "commander"
 
@@ -216,89 +385,23 @@ const order = document.getElementById('order');
 order.addEventListener('click', function (e) {
   e.preventDefault()
 
-  // Contrôle validation formulaire
-
-  const alertForm = function alerteForm(value) {
-    return `Le champ ${value} n'est pas valide. Les caractères spéciaux ne sont pas autorisés \n Le nombre de caractère doit se situer entre 3 et 20.`
-  }
-
-  const regExPrenomNomVille = function regEx(value) {
-    return /^[A-Za-zéèà-]{3,20}$/.test(value)
-  }
-
-  const regExAddress = function regEx(value) {
-    return /^[A-Za-zéèçà0-9\s]{5,70}$/.test(value)
-  }
-
-  const regExEmail = function regEx(value) {
-    return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value)
-  }
-
-  function firstNameControl() {
-    const firstName = contact.firstName
-    if (regExPrenomNomVille(firstName)) {
-      return true;
-    } else {
-      alert(alertForm('Prenom'))
-      return false;
-    }
-  }
-
-  function lastNameControl() {
-    const lastName = contact.lastName
-    if (regExPrenomNomVille(lastName)) {
-      return true;
-    } else {
-      alert(alertForm('Nom'))
-      return false;
-    }
-  }
-
-  function cityControl() {
-    const city = contact.city
-    if (regExPrenomNomVille(city)) {
-      return true;
-    } else {
-      alert(alertForm('Ville'))
-      return false;
-    }
-  }
-
-  function emailControl() {
-    const email = contact.email
-    if (regExEmail(email)) {
-      return true;
-    } else {
-      alert(`L'adresse email n'est pas valide.`)
-      return false;
-    }
-  }
-
-  function addressControl() {
-    const address = contact.address
-    if (regExAddress(address)) {
-      return true;
-    } else {
-      alert(`L'adresse n'est pas valide. Elle ne doit contenir que des lettres et des chiffres, sans ponctuation.`)
-      return false;
-    }
-  }
-
-  // On envoie l'objet "contact" dans le localStorage si tous les champs sont correctement remplis
-
   const contact = {
-    firstName: document.querySelector('#firstName').value,
-    lastName: document.querySelector('#lastName').value,
-    address: document.querySelector('#address').value,
-    city: document.querySelector('#city').value,
-    email: document.querySelector('#email').value
-  }
+    firstName: valuePrenom,
+    lastName: valueNom,
+    address: valueAdresse,
+    city: valueVille,
+    email: valueMail
+  };
 
-  if (firstNameControl() && lastNameControl() && cityControl() && emailControl() && addressControl()) {
+  console.log(contact);
+
+  if (valuePrenom && valueNom && valueAdresse && valueVille && valueMail) {
     localStorage.setItem('contact', JSON.stringify(contact))
 
   } else {
-    alert('Veuillez remplir correctement tous les champs du formulaire')
+
+    alert(`Une erreur s'est produite. Veuillez réessayer.`)
+
   }
 
   // On fait un tableau vide où on enverra nos ID produits
@@ -307,11 +410,11 @@ order.addEventListener('click', function (e) {
 
   // On pousse nos ID dans notre tableau products
 
-  dataStorage.forEach((element) => {
-    products.push(element.idProduit)
-  });
+  for (let i = 0; i < dataStorage.length; i++) {
+    products.push(dataStorage[i].idProduit)
+  };
 
-  // Envoie de l'objet orderReady vers le serveur
+  // Envoie de contact et products vers le serveur
 
   fetch(`http://localhost:3000/api/products/order`, {
     method: 'POST',

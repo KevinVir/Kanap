@@ -2,7 +2,7 @@
 let items = document.querySelector('#items');
 
 // Récupération de l'API
-let url = "http://localhost:3000/api/products";
+let url = 'http://localhost:3000/api/products';
 
 // Appel de l'API grâche à fetch
 fetch(url)
@@ -12,8 +12,13 @@ fetch(url)
         }
     })
     .then(function (products) {
+
+        // On parcours une boucle des éléments rendus par la promise pour afficher les produits
+
         for (let i = 0; i < products.length; i++) {
-            
+
+            // Dans cette boucle on crée les éléments HTML qui vont nous permettre d'afficher nos produits autant qu'il y'en a dans la promise "products"
+
             const productA = document.createElement('a');
             productA.setAttribute('href', `product.html?id=${products[i]._id}`);
             items.appendChild(productA);
@@ -37,6 +42,9 @@ fetch(url)
             productArticle.appendChild(productDescription);
         };
     })
+
+    // Si une erreur survient catch nous renvoie celle-ci
+
     .catch(function (err) {
         alert('Une erreur est survenue')
         console.log(err);
