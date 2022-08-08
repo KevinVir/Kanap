@@ -62,14 +62,16 @@ fetch(url)
         alert('Une erreur est survenue')
         console.log(err);
     });
+
 // On écoute le clique du bouton "Commander" pour envoyer les infos dans le localStorage
 
 addCart.addEventListener('click', function () {
 
     // On va ensuite chercher ce qu'il y'a dans le localStorage
 
-    let dataStorage = JSON.parse(localStorage.getItem('products'));
+    var dataStorage = JSON.parse(localStorage.getItem('products'));
     console.log(dataStorage);
+    // dataStorage.sort();
 
 
     let quantity = parseInt(document.getElementById('quantity').value);
@@ -87,12 +89,13 @@ addCart.addEventListener('click', function () {
 
     // SI le localStorage est vide 
 
-    if (dataStorage == null && addProducts.quantityProduit > 0 && addProducts.quantityProduit <= 100 && addProducts.colorProduit != "") {
+    if (dataStorage == null && quantity > 0 && quantity <= 100 && color != "") {
 
-        dataStorage = [];
-        dataStorage.push(addProducts);
-        localStorage.setItem('products', JSON.stringify(dataStorage));
-        alert('Le produit a bien été ajouter au panier')
+            dataStorage = [];
+            dataStorage.push(addProducts);
+            console.log(dataStorage);
+            localStorage.setItem('products', JSON.stringify(dataStorage));
+            alert('Le produit a bien été ajouter au panier');
 
         // SI il y'a quelque chose dans le localStorage
 
@@ -103,13 +106,13 @@ addCart.addEventListener('click', function () {
         for (let i = 0; i < dataStorage.length; i++) {
             if (dataStorage[i].idProduit == addProducts.idProduit && dataStorage[i].colorProduit == addProducts.colorProduit) {
 
-                // On transforme les valeurs strings en number pour pouvoir les additionner
+                // On transforme les valeurs strings en parseInt pour pouvoir les additionner
                 let storageQuantity = parseInt(dataStorage[i].quantityProduit);
                 let selectedItemQuantity = parseInt(addProducts.quantityProduit);
                 let total = storageQuantity + selectedItemQuantity;
 
                 return (
-                dataStorage[i].quantityProduit = total,
+                    dataStorage[i].quantityProduit = total,
 
                     // On enregistre les modifications dans le localStorage
 
@@ -119,8 +122,8 @@ addCart.addEventListener('click', function () {
             }
         };
 
-        for (let j = 0; j < dataStorage.length; j++){
-            if(dataStorage[j].idProduit == addProducts.idProduit && dataStorage[j].colorProduit != addProducts.colorProduit || dataStorage[j].idProduit != addProducts.idProduit){
+        for (let j = 0; j < dataStorage.length; j++) {
+            if (dataStorage[j].idProduit == addProducts.idProduit && dataStorage[j].colorProduit != addProducts.colorProduit || dataStorage[j].idProduit != addProducts.idProduit) {
                 return (
                     dataStorage.push(addProducts),
                     localStorage.setItem('products', JSON.stringify(dataStorage)),

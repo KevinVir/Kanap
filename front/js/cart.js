@@ -4,7 +4,6 @@ let dataStorage = JSON.parse(localStorage.getItem('products'));
 console.log(dataStorage);
 
 
-
 if (dataStorage) {
   for (let element of dataStorage) {
 
@@ -134,11 +133,20 @@ if (dataStorage) {
 
           // Utilisation de la méthode filter
 
-          let data = dataStorage.filter((el) => el.idProduit !== item.idProduit || el.colorProduit !== item.colorProduit);
+          dataStorage = dataStorage.filter((el) => el.idProduit !== item.idProduit || el.colorProduit !== item.colorProduit);
 
           // On enregistre les modifications dans le localStorage
 
-          localStorage.setItem('products', JSON.stringify(data));
+          localStorage.setItem('products', JSON.stringify(dataStorage));
+
+          // Si le localStorage se retrouve à 0 produit ou est égal à null alors on nettoie le localStorage pour éviter de se retrouver avec tableau vide
+
+          if (dataStorage == 0 || dataStorage == null) {
+            localStorage.clear();
+          }
+
+          // le produit a bien été supprimé
+
           location.reload();
           alert('Le produit a bien été supprimé');
         });
