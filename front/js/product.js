@@ -69,9 +69,8 @@ addCart.addEventListener('click', function () {
 
     // On va ensuite chercher ce qu'il y'a dans le localStorage
 
-    var dataStorage = JSON.parse(localStorage.getItem('products'));
+    let dataStorage = JSON.parse(localStorage.getItem('products'));
     console.log(dataStorage);
-    // dataStorage.sort();
 
 
     let quantity = parseInt(document.getElementById('quantity').value);
